@@ -17,7 +17,8 @@ class ContentScreen extends StatefulWidget {
 
 class _ContentScreenState extends State<ContentScreen> {
   late VideoPlayerController _videoPlayerController;
-  late ChewieController _chewieController;
+  ChewieController? _chewieController;
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -27,10 +28,27 @@ class _ContentScreenState extends State<ContentScreen> {
   }
 
   Future initializePlayer() async {
-    _videoPlayerController = VideoPlayerController.networkUrl(widget.src);
+    _videoPlayerController = VideoPlayerController.asset(widget.src!);
     await Future.wait([_videoPlayerController.initialize()]);
     _chewieController = ChewieController(
-        videoPlayerController: _videoPlayerController, autoPlay: true);
+      videoPlayerController: _videoPlayerController,
+      autoPlay: true,
+      showControls: false,
+      looping: true,
+      allowFullScreen: true,
+    );
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    _videoPlayerController.dispose();
+    _chewieController!.dispose();
+    super.dispose();
   }
 
   @override
@@ -38,10 +56,16 @@ class _ContentScreenState extends State<ContentScreen> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Image.asset(
-          widget.src,
-          fit: BoxFit.cover,
-        ),
+        // Image.asset(
+        //   widget.src,
+        //   fit: BoxFit.cover,
+        // ),
+        isLoading
+            ? Center(child: CircularProgressIndicator())
+            : _chewieController != null &&
+                    _chewieController!.videoPlayerController.value.isInitialized
+                ? Chewie(controller: _chewieController!)
+                : SizedBox(),
         OptionsScreen(),
       ],
     );
